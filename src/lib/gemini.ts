@@ -24,7 +24,10 @@ export const ASSISTANT_LABEL =
 const VITE_BASE_URL: string =
   ((import.meta as ImportMeta & { env: Record<string, string | undefined> }).env?.BASE_URL ?? "/");
 
-const PDF_SOURCES: ReadonlyArray<{ name: string; path: string }> = [] as const;
+const PDF_SOURCES: ReadonlyArray<{ name: string; path: string }> = [
+  { name: "01.NPS_1P.pdf", path: `${VITE_BASE_URL}01.NPS_1P.pdf` },
+  { name: "02.NPS_2P.pdf", path: `${VITE_BASE_URL}02.NPS_2P.pdf` },
+] as const;
 
 /**
  * Cache en localStorage: para cada PDF guardamos { uri, expiry }.
