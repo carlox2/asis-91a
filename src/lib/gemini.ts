@@ -5,21 +5,25 @@ export const GEMINI_MODEL = "gemini-3.6-flash";
 /**
  * Identifica a la materia y sirve como anclaje en la UI
  * (panel de Configuración muestra este string).
+ *
+ * TODO 91a: cambiar este string por el nombre real de la materia
+ * (ej.: "91a — [nombre de la materia, carrera, facultad]").
  */
-export const ASSISTANT_LABEL = "LAAV — Literatura en las Artes Audiovisuales (UBA, FADU)";
+export const ASSISTANT_LABEL = "Asistente 91a — [nombre de la materia]";
 
 /**
- * Bibliografía obligatoria de la materia. El modelo NO debe responder
- * con nada que no esté en estos dos PDFs. Se suben a Gemini File API
- * una sola vez por sesión y se referencian por fileUri.
+ * Bibliografía de la materia. El modelo NO debe responder con nada
+ * que no esté en estos PDFs. Se suben a Gemini File API una sola vez
+ * por sesión y se referencian por fileUri.
+ *
+ * Vacío = la app funciona en modo "Gemini genérico por voz" (sin
+ * base de conocimiento específica). Cuando llenes esta lista, copiá
+ * los PDFs adentro de `public/` y registralos acá.
  */
 const VITE_BASE_URL: string =
   ((import.meta as ImportMeta & { env: Record<string, string | undefined> }).env?.BASE_URL ?? "/");
 
-const PDF_SOURCES = [
-  { name: "01.U1_U2.pdf", path: `${VITE_BASE_URL}01.U1_U2.pdf` },
-  { name: "02.U3_U5.pdf", path: `${VITE_BASE_URL}02.U3_U5.pdf` },
-] as const;
+const PDF_SOURCES: ReadonlyArray<{ name: string; path: string }> = [] as const;
 
 /**
  * Cache en localStorage: para cada PDF guardamos { uri, expiry }.
@@ -89,14 +93,25 @@ async function ensurePdfUploaded(
 }
 
 /**
- * Prepara la base de conocimiento: sube los dos PDFs a Gemini File API
- * (o reutiliza los URIs cacheados) y devuelve un array de fileData
- * listo para meter en `parts[]`.
+ * Prepara la base de conocimiento: sube los PDFs declarados en
+ * `PDF_SOURCES` a Gemini File API (o reutiliza los URIs cacheados)
+ * y devuelve un array de `fileData` listo para meter en `parts[]`.
+ *
+ * Si `PDF_SOURCES` está vacío, devuelve un array vacío sin subir
+ * nada. La app sigue funcionando: Gemini responde con su conocimiento
+ * general (sin KB específica).
  */
 async function buildKnowledgeBaseParts(
   ai: GoogleGenAI,
   onProgress?: (msg: string) => void
 ): Promise<{ fileData: { fileUri: string; mimeType: string } }[]> {
+  if (PDF_SOURCES.length === 0) {
+    if (typeof console !== "undefined") {
+      // eslint-disable-next-line no-console
+      console.debug("[gem] PDF_SOURCES vacío: respondiendo sin base de conocimiento.");
+    }
+    return [];
+  }
   const parts: { fileData: { fileUri: string; mimeType: string } }[] = [];
   for (const src of PDF_SOURCES) {
     onProgress?.(`Subiendo ${src.name} a Gemini…`);
@@ -107,46 +122,21 @@ async function buildKnowledgeBaseParts(
 }
 
 /**
- * Prompt del sistema — Tutor "LAAV", materia "Literatura en las Artes
- * Audiovisuales" (Cátedra Ex-Babino / Gruber, Diseño de Imagen y Sonido,
- * UBA - FADU). Fuente: public/SystemPrompt.txt
+ * Prompt del sistema — Tutor 91a.
+ *
+ * TODO 91a: pegar acá el system prompt de la materia cuando esté
+ * listo. Mientras esté vacío, la app funciona pero el modelo responde
+ * con su conocimiento general (sin instrucciones específicas de la
+ * materia).
  */
-export const SYSTEM_PROMPT = `INSTRUCCIONES DEL SISTEMA: TUTOR EXPERTO "LAAV" (FADU - UBA)
-ROL Y CONTEXTO INSTITUCIONAL:
-Eres el Tutor Académico de la materia "Literatura en las Artes Audiovisuales" (Cátedra Gruber, ex-Babino) de la carrera de Diseño de Imagen y Sonido (FADU, Universidad de Buenos Aires). Tu función exclusiva es redactar respuestas modelo de nivel sobresaliente para mesas de examen final y parciales escritos.
-BASE DE CONOCIMIENTO Y ARTICULACIÓN:
-1. Fuente Teórica Primaria: Te basas estrictamente en el programa oficial 2025 y en los textos teóricos de la cátedra subidos por el usuario (Bauzá, Wolf, Ong, Jaeger, Russo, Soriano, Gruber, Sarti, Gómez, Vernant y Vidal-Naquet, Barthes, Álvarez Espinoza, Racket, Garrido Bigorra, Cortés, Ledesma).
-2. Fuente Fílmica/Literaria Secundaria: Empleas tu conocimiento general para reconstruir secuencias, personajes, estructuras dramáticas y procedimientos audiovisuales de las obras obligatorias.
-3. Cruce Crítico Mandatorio: Queda prohibido resumir argumentos o anécdotas de las obras. Todo comentario formal o escénico debe explicarse a partir de las categorías teóricas de la bibliografía de la cátedra (ejemplo: leer la escena del departamento de Godard mediante el concepto de "linealidad intervenida" de Russo o la puesta en abismo de Soriano).
-PROGRAMA ANALÍTICO POR UNIDADES (1º CUATRIMESTRE 2025):
-- UNIDAD 1: Héroes, viajes y monstruos.
-  * Obras: Odisea de Homero (Cantos VIII y IX).
-  * Ejes teóricos: El mito como imaginario y pensamiento simbólico (Bauzá). La cultura oral frente a la escrita: aedos, rapsodas, declamación, memoria y fórmulas (Ong; Bauzá). La cuestión homérica. El ideal heroico, paideia y areté (Jaeger). El viaje, las pruebas y los cuerpos monstruosos (Hartog; Nava Contreras).
-  * Introducción a la transposición: Sergio Wolf (capítulos II y III). Distinción epistemológica frente a la "adaptación".
-- UNIDAD 2: Relaciones entre literatura y cine (Transposición).
-  * Caso A: El desprecio (Alberto Moravia, 1956 vs. Jean-Luc Godard, 1963).
-    Ejes: Transposición y autonomía del texto fílmico (Wolf). Linealidad intervenida (Russo). Cine dentro del cine, reflexividad y puesta en abismo (Soriano). El narrador no confiable y el cambio de punto de vista en el dispositivo cinematográfico (Mendoza Ruiz y Gallegos Vargas). La Odisea como intertexto dentro del film (Fritz Lang).
-  * Caso B: Fahrenheit 451 (Ray Bradbury, 1953/1993 vs. François Truffaut, 1966).
-    Ejes: Paradojas de la transposición: filmar la erradicación del libro mediante imágenes (Gruber). Memoria, oralidad secundaria y olvido (Ong; Bradbury). La ciencia ficción como mito contemporáneo y vida artificial (Sarti). Capitalismo tardío, sociedad de consumo, tecnocracia y distopía (Gómez).
-- UNIDAD 3: Tragedia clásica y reactualizaciones contemporáneas.
-  * Contexto griego y obra base: Medea de Eurípides.
-    Ejes: Surgimiento de la escritura, democracia y polis ateniense. Dioniso, el dionisismo y las fiestas dionisíacas (Bauzá). Función cívica, política y religiosa del teatro (Barthes). Ambigüedad y tensiones trágicas (Vernant y Vidal-Naquet). La transgresión femenina, alteridad y filicidio (Álvarez Espinoza; Racket).
-  * Transposiciones cinematográficas:
-    a) Medea (Lars von Trier, 1988): Doble transposición a partir del guion inédito de Carl T. Dreyer y Preben Thomsen; austeridad escénica, materialidad del video y atmósfera arcaica (Soriano).
-    b) Así es la vida... (Arturo Ripstein, 2000): Transposición cultural del mito clásico al melodrama de vecindad latinoamericano; encierro espacial, plano secuencia y trazas de otros lenguajes (Garrido Bigorra).
-- UNIDAD 4: Monstruos en la literatura y el cine.
-  * Obras: Frankenstein o el moderno Prometeo (Mary Shelley, 1818/2006) vs. Frankenstein (James Whale, 1931).
-  * Ejes teóricos: Novela gótica y ciencia ficción como mito moderno de la vida artificial y el autómata (Sarti). El monstruo como encarnación de la alteridad y desestabilizador del orden social y cultural (Cortés; Ledesma). Resemantizaciones: del monstruo elocuente, filosófico y lector en Shelley al arquetipo cinematográfico mudo, patético y corporalizado de Whale y sus derivas en los medios audiovisuales (Gruber).
-REGLAS DE SALIDA Y RESTRICCIONES FORMALES INQUEBRANTABLES:
-1. Extensión exacta: Cada respuesta debe tener OBLIGATORIAMENTE entre 200 y 250 palabras (sin excepciones). Si la respuesta supera las 250 palabras o no llega a 200, reescribe internamente antes de emitir la salida eliminando o agregando precisiones teóricas.
-2. Formato: Prosa continua y corrida en uno o dos párrafos fluidos. Terminantemente prohibido el uso de viñetas, listas numeradas, negritas de títulos o cuadros sinópticos.
-3. Inicio directo: No saludes, no uses fórmulas de cortesía, no repitas la consigna ni agregues cierres condescendientes. Comienza directamente con la argumentación teórica.
-4. Puntuación vedada: Prohibido de forma absoluta el uso de guiones largos (—), rayas (–), guiones cortos (-) o barras para crear pausas, incisos o énfasis dramático. Los incisos se resuelven únicamente mediante comas, puntos y comas o paréntesis.
-5. Vocabulario prohibido: Queda terminantemente vetado el uso de la palabra "adaptación" para aludir al pasaje entre literatura y cine (salvo que sea para desestimar la noción de fidelidad). Emplea exclusivamente el concepto de "transposición".
-6. Registro: Formal universitario, aunque Coloquial y cercano, pero sin perder rigurosidad académica.`;
+export const SYSTEM_PROMPT = ``;
 
+/**
+ * Nota legible sobre qué hay cargado como base de conocimiento.
+ * Sólo se usa en logs / debug; el modelo la ignora.
+ */
 export const KNOWLEDGE_BASE_NOTE =
-  "Base de conocimiento: 01.U1_U2.pdf + 02.U3_U5.pdf (subidos a Gemini File API).";
+  "Base de conocimiento: pendiente de carga (ver PDF_SOURCES en src/lib/gemini.ts).";
 
 /**
  * Lee la API key desde la variable de entorno de Vite.
@@ -317,7 +307,7 @@ export function isKnowledgeBaseReady(): boolean {
  *
  * Estructura del request:
  *   parts: [
- *     ...pdfFileData[],              // 01.U1_U2.pdf + 02.U3_U5.pdf
+ *     ...pdfFileData[],              // todos los PDFs declarados en PDF_SOURCES
  *     { inlineData: <audio> },       // clip grabado
  *     { text: <instrucción> }        // "Escuchá el audio y respondé…"
  *   ]
@@ -355,8 +345,8 @@ export async function askGemini(
         {
           text:
             "Escuchá el audio adjunto y respondé según las instrucciones del sistema. " +
-            "Tu respuesta debe fundamentarse exclusivamente en los dos PDFs cargados " +
-            "(01.U1_U2.pdf y 02.U3_U5.pdf). " +
+            "Tu respuesta debe fundamentarse exclusivamente en los PDFs cargados " +
+            "como base de conocimiento (ver PDF_SOURCES en src/lib/gemini.ts). " +
             "Extensión obligatoria: entre 200 y 250 palabras, en prosa continua, " +
             "sin saludos, sin listas y sin cuadros.",
         },
