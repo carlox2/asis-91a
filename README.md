@@ -1,8 +1,9 @@
 ## 91a — tutor académico por voz
 
-Fork operativo de `asis-laav` con la paleta cyan original y el
-header `LAAV` reemplazado por `91a`. Listo para ingestar el system
-prompt y la base de conocimiento de otra materia.
+Asistente académico por voz para la materia **Neuropsicología**
+(Cód. 91, Cátedra Politis, UBA Psicología). Fork de asis-laav con
+la paleta cyan original y la materia/prompt/base reseteados para
+cargar el contenido de 91a.
 
 ### Pendiente para terminar la ingesta
 

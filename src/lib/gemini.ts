@@ -6,10 +6,11 @@ export const GEMINI_MODEL = "gemini-3.6-flash";
  * Identifica a la materia y sirve como anclaje en la UI
  * (panel de Configuración muestra este string).
  *
- * TODO 91a: cambiar este string por el nombre real de la materia
- * (ej.: "91a — [nombre de la materia, carrera, facultad]").
+ * Materia: Neuropsicología (NPS) · Cód. 91 · Cátedra Politis
+ * Facultad de Psicología, UBA.
  */
-export const ASSISTANT_LABEL = "Asistente 91a — [nombre de la materia]";
+export const ASSISTANT_LABEL =
+  "Asistente 91a — Neuropsicología (NPS, Cód. 91, Cátedra Politis — UBA Psicología)";
 
 /**
  * Bibliografía de la materia. El modelo NO debe responder con nada

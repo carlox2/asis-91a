@@ -3,15 +3,15 @@ INSTRUCCIONES DE USO — Asistente 91a
 
 [ PENDIENTE ]
 
-Este archivo documentaba instrucciones para los alumnos en la
-versión anterior (LAAV). Reemplazarlo por las instrucciones de
-91a cuando estén listas.
+Este archivo documentaba instrucciones para los alumnos en una
+versión anterior. Reemplazarlo por las instrucciones de 91a
+(Neuropsicología — Cátedra Politis) cuando estén listas.
 
 Formato sugerido:
 
-  · Materia: [nombre]
-  · Carrera: [carrera / facultad]
-  · Cátedra: [cátedra y docente]
+  · Materia: Neuropsicología (NPS)
+  · Carrera: Psicología, UBA
+  · Cátedra: Politis
   · Cuatrimestre: [cuatrimestre y año]
   · Qué hace este tutor: [1-2 líneas]
   · Cómo se usa: [pasos cortos]
